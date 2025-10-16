@@ -101,17 +101,6 @@ ontario-map-app/
 - GeoJSON data is loaded once on startup and cached
 - CORS is enabled for frontend development
 
-### Frontend Development
-- Pure JavaScript ES6+ with modern browser APIs
-- Responsive design with mobile-first approach
-- Accessible components with ARIA labels
-- Smooth animations and transitions
-
-### Customization
-- Modify `ontario_regions.geojson` to change region boundaries
-- Update colors in `app.js` regionColors object
-- Customize styling in `index.html` or add external CSS
-
 ## Browser Support
 
 - Chrome 60+
