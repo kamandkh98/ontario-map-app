@@ -45,6 +45,8 @@ pip install -r requirements.txt
 # Copy environment template
 cp env_template .env
 
+# Edit .env if needed (optional)
+```
 
 ### 3. Run the Application
 
@@ -52,8 +54,8 @@ cp env_template .env
 # Start the Flask backend
 python app.py
 ```
-The backend will start on `http://localhost:5000`
 
+The backend will start on `http://localhost:5000`
 
 ## Usage Examples
 
