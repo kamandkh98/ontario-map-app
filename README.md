@@ -1,4 +1,4 @@
-# Ontario Region Map
+# Ontario Regional Map
 
 A web application that displays an interactive map of Ontario, showing Northern and Southern regions with location search functionality.
 
