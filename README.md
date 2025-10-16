@@ -1,6 +1,6 @@
 # Ontario Regional Map
 
-A web application that displays an interactive map of Ontario, showing Northern and Southern regions with location search functionality. This mapping tool assists in identifying the correct proportion of reimbursable eligible expenditures as per the table above by confirming whether your Site is located in the Northern or Southern Ontario regions. ​
+A web application that displays an interactive map of Ontario, showing Northern and Southern regions with location search functionality. This mapping tool assists in identifying the correct proportion of reimbursable eligible expenditures by confirming whether your Site is located in the Northern or Southern Ontario regions. ​
 
 ## Features
 
