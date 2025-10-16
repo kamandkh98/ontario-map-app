@@ -4,14 +4,14 @@ A professional, modern web application that displays an interactive map of Ontar
 
 ## Features
 
-- 🗺️ **Interactive Map**: Built with Leaflet.js showing Ontario regions
-- 🎨 **Modern UI**: Clean, responsive design using Tailwind CSS
-- 🔍 **Location Search**: Search by address or coordinates (lat, lon)
-- 📍 **Region Detection**: Automatic detection of Northern vs Southern Ontario
-- 📱 **Responsive Design**: Works on desktop and mobile devices
-- ♿ **Accessible**: ARIA labels and keyboard navigation support
-- 🌐 **Geocoding**: Uses Nominatim API for address-to-coordinate conversion
-- 📊 **Visual Legend**: Color-coded regions with descriptions
+-  **Interactive Map**: Built with Leaflet.js showing Ontario regions
+-  **Modern UI**: Clean, responsive design using Tailwind CSS
+-  **Location Search**: Search by address or coordinates (lat, lon)
+-  **Region Detection**: Automatic detection of Northern vs Southern Ontario
+-  **Responsive Design**: Works on desktop and mobile devices
+-  **Accessible**: ARIA labels and keyboard navigation support
+-  **Geocoding**: Uses Nominatim API for address-to-coordinate conversion
+-  **Visual Legend**: Color-coded regions with descriptions
 
 ## Tech Stack
 
