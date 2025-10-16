@@ -68,21 +68,6 @@ python -m http.server 8000
 # Then open http://localhost:8000 in your browser
 ```
 
-## API Endpoints
-
-### GET `/api/regions`
-Returns GeoJSON data for Ontario regions.
-
-**Response:**
-```json
-{
-  "type": "FeatureCollection",
-  "features": [...]
-}
-```
-
-### GET `/api/health`
-Health check endpoint.
 
 ## Usage Examples
 
