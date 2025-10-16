@@ -52,7 +52,6 @@ cp env_template .env
 # Start the Flask backend
 python app.py
 ```
-
 The backend will start on `http://localhost:5000`
 
 
