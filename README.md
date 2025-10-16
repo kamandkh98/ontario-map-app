@@ -79,32 +79,6 @@ Returns GeoJSON data for Ontario regions.
 }
 ```
 
-### POST `/api/geocode`
-Geocodes a location and determines its Ontario region.
-
-**Request:**
-```json
-{
-  "location": "Toronto, ON" 
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "latitude": 43.6532,
-  "longitude": -79.3832,
-  "region": {
-    "region": "south",
-    "name": "Southern Ontario",
-    "description": "The most populated region..."
-  },
-  "input_type": "address",
-  "message": "This location is in Southern Ontario."
-}
-```
-
 ### GET `/api/health`
 Health check endpoint.
 
