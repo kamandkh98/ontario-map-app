@@ -1,11 +1,10 @@
 # Ontario Region Map
 
-A professional, modern web application that displays an interactive map of Ontario, showing Northern and Southern regions with location search functionality.
+A web application that displays an interactive map of Ontario, showing Northern and Southern regions with location search functionality.
 
 ## Features
 
 -  **Interactive Map**: Built with Leaflet.js showing Ontario regions
--  **Modern UI**: Clean, responsive design using Tailwind CSS
 -  **Location Search**: Search by address or coordinates (lat, lon)
 -  **Region Detection**: Automatic detection of Northern vs Southern Ontario
 -  **Responsive Design**: Works on desktop and mobile devices
@@ -46,8 +45,6 @@ pip install -r requirements.txt
 # Copy environment template
 cp env_template .env
 
-# Edit .env if needed (optional)
-```
 
 ### 3. Run the Application
 
