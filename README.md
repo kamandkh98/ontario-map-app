@@ -45,8 +45,6 @@ pip install -r requirements.txt
 # Copy environment template
 cp env_template .env
 
-# Edit .env if needed (optional)
-```
 
 ### 3. Run the Application
 
