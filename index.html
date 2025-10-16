@@ -68,8 +68,8 @@
     <header class="bg-white border-b border-gray-200 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <div class="text-center">
-                <h1 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">Ontario Region Map</h1>
-                <p class="text-lg text-gray-600 font-medium">Interactive mapping tool for Northern and Southern Ontario regions</p>
+                <h1 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">EV ChargeON Regional Map</h1>
+                <p class="text-lg text-gray-600 font-medium"> <em>Interactive mapping tool to identify if your Site is in Northern or Southern Ontario</em></p>
             </div>
         </div>
     </header>
@@ -82,7 +82,7 @@
                 <h2 class="text-2xl font-semibold text-gray-900 mb-4">Location Search and Regional Information</h2>
                 <div class="prose prose-gray max-w-none">
                     <p class="text-lg text-gray-700 leading-relaxed mb-6">
-                        Use this interactive mapping tool to search for locations across Ontario and determine whether they fall within Northern or Southern Ontario regions. This tool supports both address searches and coordinate inputs.
+                        This mapping tool assists in identifying the correct proportion of reimbursable eligible expenditures as per the table above by confirming whether your Site is located in the Northern or Southern Ontario regions. ​
                     </p>
                     <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
                         <div class="flex items-start space-x-3">
@@ -92,9 +92,9 @@
                                 </svg>
                             </div>
                             <div>
-                                <p class="text-blue-800 font-medium mb-2">EV chargeON Program Support</p>
+                                <p class="text-blue-800 font-medium mb-2">EV ChargeON Program Support</p>
                                 <p class="text-blue-700 text-sm leading-relaxed">
-                                    <strong>Note:</strong> This map has been created to support applicants of the EV chargeON program in order to understand if their charger deployment location would be in northern or southern region.
+                                    <strong>Note:</strong> This map has been created to support applicants of the EV ChargeON program in order to understand if their charger deployment location would be in the Northern or Southern region.
                                 </p>
                             </div>
                         </div>
@@ -105,29 +105,68 @@
 
         <!-- Search Section -->
         <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">Find Location</h2>
-            <div class="flex flex-col sm:flex-row gap-3">
-                <div class="flex-1">
-                    <label for="location-input" class="sr-only">Enter address or coordinates</label>
-                    <input 
-                        type="text" 
-                        id="location-input"
-                        class="search-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                        placeholder="Enter address (e.g., Toronto, ON) or coordinates (e.g., 43.6532, -79.3832)"
-                        aria-describedby="location-help"
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Find Location & Check Funding Eligibility</h2>
+            
+            <!-- Location Search -->
+            <div class="mb-6">
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <div class="flex-1">
+                        <label for="location-input" class="sr-only">Enter address or coordinates</label>
+                        <input 
+                            type="text" 
+                            id="location-input"
+                            class="search-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                            placeholder="Enter address (e.g., Toronto, ON) or coordinates (e.g., 43.6532, -79.3832)"
+                            aria-describedby="location-help"
+                        >
+                        <p id="location-help" class="text-sm text-gray-500 mt-1">
+                            Search by address or enter coordinates as "latitude, longitude"
+                        </p>
+                    </div>
+                    <button 
+                        id="search-btn"
+                        class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 flex items-center justify-center min-w-[120px]"
+                        aria-label="Search for location"
                     >
-                    <p id="location-help" class="text-sm text-gray-500 mt-1">
-                        Search by address or enter coordinates as "latitude, longitude"
-                    </p>
+                        <span id="search-text">Search</span>
+                        <div id="search-loading" class="loading-spinner hidden ml-2"></div>
+                    </button>
                 </div>
-                <button 
-                    id="search-btn"
-                    class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 flex items-center justify-center min-w-[120px]"
-                    aria-label="Search for location"
-                >
-                    <span id="search-text">Search</span>
-                    <div id="search-loading" class="loading-spinner hidden ml-2"></div>
-                </button>
+            </div>
+
+            <!-- Applicant Type Selection -->
+            <div class="mb-6">
+                <h3 class="text-md font-medium text-gray-900 mb-3">Applicant Type</h3>
+                <div class="space-y-3">
+                    <label class="flex items-center space-x-3 cursor-pointer">
+                        <input type="radio" name="applicant-type" value="indigenous" class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+                        <span class="text-sm text-gray-700">Indigenous community or business</span>
+                    </label>
+                    <label class="flex items-center space-x-3 cursor-pointer">
+                        <input type="radio" name="applicant-type" value="municipality" class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+                        <span class="text-sm text-gray-700">Municipality</span>
+                    </label>
+                    <label class="flex items-center space-x-3 cursor-pointer">
+                        <input type="radio" name="applicant-type" value="business" class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+                        <span class="text-sm text-gray-700">Business, not for profit corporation, or broader public sector</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Site Location Options (Hidden by default) -->
+            <div id="municipality-options" class="mb-6 hidden">
+                <h3 class="text-md font-medium text-gray-900 mb-3">Site Location</h3>
+                <div class="space-y-3">
+                    <label class="flex items-center space-x-3 cursor-pointer">
+                        <input type="radio" name="municipality-population" value="below-170k" class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+                        <span class="text-sm text-gray-700">Located in a municipality with a population less than 170,000, or an Indigenous
+                            Community</span>
+                    </label>
+                    <label class="flex items-center space-x-3 cursor-pointer">
+                        <input type="radio" name="municipality-population" value="above-170k" class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+                        <span class="text-sm text-gray-700">Located in a municipality with a population over 170,000​</span>
+                    </label>
+                </div>
             </div>
             
             <!-- Search Results -->

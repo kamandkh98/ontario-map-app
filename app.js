@@ -63,12 +63,16 @@ class OntarioMapApp {
      */
     async loadRegions() {
         try {
+            console.log(`Loading regions from: ${this.apiBaseUrl}/regions`);
             const response = await fetch(`${this.apiBaseUrl}/regions`);
+            console.log(`Regions response status: ${response.status}`);
+            
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
             const geojsonData = await response.json();
+            console.log('Regions data loaded successfully');
             
             // Define region colors
             const regionColors = {
@@ -134,6 +138,8 @@ class OntarioMapApp {
     setupEventListeners() {
         const searchBtn = document.getElementById('search-btn');
         const locationInput = document.getElementById('location-input');
+        const applicantTypeRadios = document.querySelectorAll('input[name="applicant-type"]');
+        const municipalityOptions = document.getElementById('municipality-options');
 
         // Search button click
         searchBtn.addEventListener('click', () => this.handleSearch());
@@ -148,6 +154,21 @@ class OntarioMapApp {
         // Clear previous results when typing
         locationInput.addEventListener('input', () => {
             this.hideSearchResult();
+        });
+
+        // Handle applicant type selection
+        applicantTypeRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                if (e.target.value === 'municipality') {
+                    municipalityOptions.classList.remove('hidden');
+                } else {
+                    municipalityOptions.classList.add('hidden');
+                    // Clear municipality population selection
+                    document.querySelectorAll('input[name="municipality-population"]').forEach(radio => {
+                        radio.checked = false;
+                    });
+                }
+            });
         });
     }
 
@@ -166,21 +187,52 @@ class OntarioMapApp {
             return;
         }
 
+        // Get applicant type
+        const applicantType = document.querySelector('input[name="applicant-type"]:checked');
+        if (!applicantType) {
+            this.showError('Please select an applicant type.');
+            return;
+        }
+
+        // Get municipality population if applicable
+        let municipalityPopulation = null;
+        if (applicantType.value === 'municipality') {
+            const municipalityPopRadio = document.querySelector('input[name="municipality-population"]:checked');
+            if (!municipalityPopRadio) {
+                this.showError('Please select municipality population size.');
+                return;
+            }
+            municipalityPopulation = municipalityPopRadio.value;
+        }
+
         // Show loading state
         searchText.textContent = 'Searching...';
         searchLoading.classList.remove('hidden');
         searchBtn.disabled = true;
 
         try {
+            const requestData = {
+                location,
+                applicant_type: applicantType.value,
+                municipality_population: municipalityPopulation
+            };
+
+            console.log(`Making request to: ${this.apiBaseUrl}/geocode`);
+            console.log(`Request body:`, requestData);
+            
             const response = await fetch(`${this.apiBaseUrl}/geocode`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ location })
+                body: JSON.stringify(requestData)
             });
 
+            console.log(`Response status: ${response.status}`);
+            console.log(`Response ok: ${response.ok}`);
+
             const data = await response.json();
+            console.log('Response data:', data);
 
             if (!response.ok) {
                 throw new Error(data.error || 'Geocoding failed');
@@ -191,6 +243,11 @@ class OntarioMapApp {
 
         } catch (error) {
             console.error('Search error:', error);
+            console.error('Error details:', {
+                name: error.name,
+                message: error.message,
+                stack: error.stack
+            });
             this.showError(error.message || 'Failed to search location. Please try again.');
         } finally {
             // Reset loading state
@@ -260,13 +317,13 @@ class OntarioMapApp {
         });
 
         // Show search result message
-        this.showSearchResult(message, region, input_type);
+        this.showSearchResult(message, region, input_type, data.funding_info);
     }
 
     /**
      * Show search result message
      */
-    showSearchResult(message, region, inputType) {
+    showSearchResult(message, region, inputType, fundingInfo = null) {
         const resultDiv = document.getElementById('search-result');
         
         let bgColor = 'bg-blue-50 border-blue-200';
@@ -277,16 +334,45 @@ class OntarioMapApp {
             if (region.region === 'north') {
                 bgColor = 'bg-green-50 border-green-200';
                 textColor = 'text-green-800';
-                icon = '🌲';
+                //icon = '🌲';
             } else if (region.region === 'south') {
                 bgColor = 'bg-blue-50 border-blue-200';
                 textColor = 'text-blue-800';
-                icon = '🏙️';
+               // icon = '🏙️';
             }
         } else {
             bgColor = 'bg-yellow-50 border-yellow-200';
             textColor = 'text-yellow-800';
             icon = '⚠️';
+        }
+
+        let fundingSection = '';
+        if (fundingInfo) {
+            fundingSection = `
+                <div class="mt-4 p-4 bg-white rounded-lg border border-gray-200">
+                    <h4 class="font-semibold text-gray-900 mb-2"> Funding Eligibility</h4>
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Applicant Type:</span>
+                            <span class="text-sm font-medium text-gray-900">${fundingInfo.applicant_type_display}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Region:</span>
+                            <span class="text-sm font-medium text-gray-900">${region ? (region.region === 'north' ? 'Northern Ontario' : 'Southern Ontario') : 'Outside Ontario'}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Reimbursable proportion of eligible expenditures​: </span>
+                            <span class="text-sm font-bold text-green-600">${fundingInfo.funding_percentage}%</span>
+                        </div>
+                        ${fundingInfo.municipality_population ? `
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Municipality Size:</span>
+                            <span class="text-sm font-medium text-gray-900">${fundingInfo.municipality_population_display}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
         }
 
         resultDiv.className = `mt-4 p-4 rounded-lg border fade-in ${bgColor}`;
@@ -295,6 +381,7 @@ class OntarioMapApp {
                 <span class="text-xl">${icon}</span>
                 <div class="flex-1">
                     <div class="font-medium ${textColor}">${message}</div>
+                    ${fundingSection}
                 </div>
             </div>
         `;

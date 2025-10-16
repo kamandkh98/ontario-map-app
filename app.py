@@ -64,7 +64,7 @@ def parse_coordinates(location_input: str) -> Optional[Tuple[float, float]]:
 
 def geocode_address(address: str) -> Optional[Tuple[float, float, str]]:
     """
-    Geocode an address using Nominatim API.
+    Geocode an address using Nominatim API with multiple fallback strategies.
     
     Args:
         address: Address string to geocode
@@ -72,77 +72,177 @@ def geocode_address(address: str) -> Optional[Tuple[float, float, str]]:
     Returns:
         Tuple of (latitude, longitude, simplified_address) or None if geocoding fails
     """
-    try:
-        # Use Nominatim API with proper headers and address details
-        url = "https://nominatim.openstreetmap.org/search"
-        params = {
-            'q': address,
-            'format': 'json',
-            'limit': 1,
-            'countrycodes': 'ca',  # Limit to Canada
-            'addressdetails': 1    # Get structured address components
-        }
-        headers = {
-            'User-Agent': 'Ontario-Map-App/1.0'
-        }
-        
-        response = requests.get(url, params=params, headers=headers, timeout=10)
-        response.raise_for_status()
-        
-        data = response.json()
-        if data:
-            lat = float(data[0]['lat'])
-            lon = float(data[0]['lon'])
-            
-            # Extract simplified address components
-            result = data[0]
-            address_details = result.get('address', {})
-            address_parts = []
-            
-            # Get house number and street name
-            house_number = address_details.get('house_number', '')
-            road = address_details.get('road', '')
-            
-            if house_number and road:
-                address_parts.append(f"{house_number} {road}")
-            elif road:
-                address_parts.append(road)
-            
-            # Get city/town/village (try multiple fields as different places use different terms)
-            city = (address_details.get('city') or 
-                   address_details.get('town') or 
-                   address_details.get('village') or 
-                   address_details.get('municipality'))
-            
-            if city:
-                address_parts.append(city)
-            
-            # Create simplified address or fallback to display_name
-            if address_parts:
-                simplified_address = ", ".join(address_parts)
-            else:
-                # Fallback: use display_name but try to simplify it
-                display_name = result.get('display_name', address)
-                # Try to extract just the first few parts before province
-                parts = display_name.split(', ')
-                if len(parts) > 2:
-                    # Take first 2-3 parts, avoiding province/country
-                    simplified_parts = []
-                    for part in parts[:4]:  # Take up to 4 parts
-                        if part.lower() not in ['ontario', 'canada', 'on']:
-                            simplified_parts.append(part)
-                        if len(simplified_parts) >= 2:  # Stop after 2 meaningful parts
-                            break
-                    simplified_address = ", ".join(simplified_parts) if simplified_parts else display_name
-                else:
-                    simplified_address = display_name
-                
-            return (lat, lon, simplified_address)
-            
-    except (requests.RequestException, KeyError, ValueError, IndexError) as e:
-        print(f"Geocoding error: {e}")
+    print(f"Attempting to geocode address: '{address}'")
     
+    # Try different address variations to improve success rate
+    address_variations = [
+        address,  # Original address
+        f"{address}, Ontario, Canada",  # Add province and country
+        f"{address}, ON, Canada",  # Abbreviated province
+        address.replace(",", "").strip(),  # Remove commas
+    ]
+    
+    for i, addr_variant in enumerate(address_variations):
+        print(f"Trying variation {i+1}: '{addr_variant}'")
+        
+        try:
+            # Use Nominatim API with proper headers and address details
+            url = "https://nominatim.openstreetmap.org/search"
+            params = {
+                'q': addr_variant,
+                'format': 'json',
+                'limit': 1,
+                'countrycodes': 'ca',  # Limit to Canada
+                'addressdetails': 1    # Get structured address components
+            }
+            headers = {
+                'User-Agent': 'Ontario-Map-App/1.0'
+            }
+            
+            print(f"Making request to Nominatim with params: {params}")
+            response = requests.get(url, params=params, headers=headers, timeout=10)
+            print(f"Response status: {response.status_code}")
+            
+            response.raise_for_status()
+            
+            data = response.json()
+            print(f"Response data: {data}")
+            
+            if data:
+                lat = float(data[0]['lat'])
+                lon = float(data[0]['lon'])
+                print(f"Successfully geocoded to: {lat}, {lon}")
+                
+                # Extract simplified address components
+                result = data[0]
+                address_details = result.get('address', {})
+                address_parts = []
+                
+                # Get house number and street name
+                house_number = address_details.get('house_number', '')
+                road = address_details.get('road', '')
+                
+                if house_number and road:
+                    address_parts.append(f"{house_number} {road}")
+                elif road:
+                    address_parts.append(road)
+                
+                # Get city/town/village (try multiple fields as different places use different terms)
+                city = (address_details.get('city') or 
+                       address_details.get('town') or 
+                       address_details.get('village') or 
+                       address_details.get('municipality'))
+                
+                if city:
+                    address_parts.append(city)
+                
+                # Create simplified address or fallback to display_name
+                if address_parts:
+                    simplified_address = ", ".join(address_parts)
+                else:
+                    # Fallback: use display_name but try to simplify it
+                    display_name = result.get('display_name', address)
+                    # Try to extract just the first few parts before province
+                    parts = display_name.split(', ')
+                    if len(parts) > 2:
+                        # Take first 2-3 parts, avoiding province/country
+                        simplified_parts = []
+                        for part in parts[:4]:  # Take up to 4 parts
+                            if part.lower() not in ['ontario', 'canada', 'on']:
+                                simplified_parts.append(part)
+                            if len(simplified_parts) >= 2:  # Stop after 2 meaningful parts
+                                break
+                        simplified_address = ", ".join(simplified_parts) if simplified_parts else display_name
+                    else:
+                        simplified_address = display_name
+                    
+                print(f"Simplified address: {simplified_address}")
+                return (lat, lon, simplified_address)
+            else:
+                print(f"No results returned from Nominatim API for variation {i+1}")
+                
+        except requests.RequestException as e:
+            print(f"Request error during geocoding (variation {i+1}): {e}")
+        except KeyError as e:
+            print(f"KeyError during geocoding (variation {i+1}): {e}")
+        except ValueError as e:
+            print(f"ValueError during geocoding (variation {i+1}): {e}")
+        except IndexError as e:
+            print(f"IndexError during geocoding (variation {i+1}): {e}")
+        except Exception as e:
+            print(f"Unexpected error during geocoding (variation {i+1}): {e}")
+    
+    print("All geocoding variations failed")
     return None
+
+def calculate_funding_eligibility(applicant_type: str, municipality_population: Optional[str], region: Optional[str]) -> Dict:
+    """
+    Calculate funding eligibility based on applicant type, municipality population, and region.
+    
+    Args:
+        applicant_type: Type of applicant (indigenous, municipality, business)
+        municipality_population: Population size for municipalities (below-170k, above-170k)
+        region: Ontario region (north, south, or None if outside Ontario)
+        
+    Returns:
+        Dictionary with funding information
+    """
+    # Default values
+    funding_percentage = 0
+    applicant_type_display = ""
+    municipality_population_display = ""
+    
+    # Set display names
+    applicant_type_displays = {
+        'indigenous': 'Indigenous community or business',
+        'municipality': 'Municipalities',
+        'business': 'Businesses, not for profit corporations, and broader public sector'
+    }
+    
+    municipality_population_displays = {
+        'below-170k': 'Below 170,000',
+        'above-170k': 'Above 170,000'
+    }
+    
+    applicant_type_display = applicant_type_displays.get(applicant_type, applicant_type)
+    
+    if municipality_population:
+        municipality_population_display = municipality_population_displays.get(municipality_population, municipality_population)
+    
+    # Calculate funding percentage based on rules:
+    # - All applicants in Northern region: 75%
+    # - Indigenous community or business and Municipalities with populations below 170,000: 75%
+    # - Businesses, not for profit corporations, and broader public sector and municipalities with populations above 170,000: 50%
+    
+    if region == 'north':
+        # All applicants in Northern region get 75%
+        funding_percentage = 75
+    elif region == 'south':
+        if applicant_type == 'indigenous':
+            # Indigenous communities get 75% in Southern Ontario
+            funding_percentage = 75
+        elif applicant_type == 'municipality':
+            if municipality_population == 'below-170k':
+                # Municipalities below 170k get 75% in Southern Ontario
+                funding_percentage = 75
+            elif municipality_population == 'above-170k':
+                # Municipalities above 170k get 50% in Southern Ontario
+                funding_percentage = 50
+        elif applicant_type == 'business':
+            # Businesses get 50% in Southern Ontario
+            funding_percentage = 50
+    else:
+        # Outside Ontario - no funding
+        funding_percentage = 0
+    
+    return {
+        'applicant_type': applicant_type,
+        'applicant_type_display': applicant_type_display,
+        'municipality_population': municipality_population,
+        'municipality_population_display': municipality_population_display,
+        'funding_percentage': funding_percentage,
+        'region': region
+    }
 
 def point_in_region(lat: float, lon: float) -> Optional[Dict]:
     """
@@ -186,11 +286,13 @@ def get_regions():
 @app.route('/api/geocode', methods=['POST'])
 def geocode():
     """
-    Geocode a location and determine its Ontario region.
+    Geocode a location and determine its Ontario region with funding eligibility.
     
     Request body:
     {
-        "location": "address or coordinates"
+        "location": "address or coordinates",
+        "applicant_type": "indigenous|municipality|business",
+        "municipality_population": "below-170k|above-170k" (optional, only for municipalities)
     }
     
     Returns:
@@ -204,7 +306,15 @@ def geocode():
             "description": "Region Description"
         },
         "input_type": "coordinates|address",
-        "display_address": "Simplified address"
+        "display_address": "Simplified address",
+        "funding_info": {
+            "applicant_type": "indigenous|municipality|business",
+            "applicant_type_display": "Display name",
+            "municipality_population": "below-170k|above-170k",
+            "municipality_population_display": "Display name",
+            "funding_percentage": 75 or 50,
+            "region": "north|south"
+        }
     }
     """
     try:
@@ -215,6 +325,26 @@ def geocode():
         location_input = data['location'].strip()
         if not location_input:
             return jsonify({'error': 'Location cannot be empty'}), 400
+        
+        # Get applicant type and municipality population
+        applicant_type = data.get('applicant_type')
+        municipality_population = data.get('municipality_population')
+        
+        if not applicant_type:
+            return jsonify({'error': 'Applicant type is required'}), 400
+        
+        # Validate applicant type
+        valid_applicant_types = ['indigenous', 'municipality', 'business']
+        if applicant_type not in valid_applicant_types:
+            return jsonify({'error': 'Invalid applicant type'}), 400
+        
+        # Validate municipality population if applicable
+        if applicant_type == 'municipality':
+            if not municipality_population:
+                return jsonify({'error': 'Municipality population is required for municipality applicants'}), 400
+            valid_populations = ['below-170k', 'above-170k']
+            if municipality_population not in valid_populations:
+                return jsonify({'error': 'Invalid municipality population size'}), 400
         
         # First, try to parse as coordinates
         coords = parse_coordinates(location_input)
@@ -228,7 +358,7 @@ def geocode():
             
             if geocode_result is None:
                 return jsonify({
-                    'error': 'Could not geocode the provided location. Please check the address or coordinates.'
+                    'error': 'Could not geocode the provided location. Please try:\n• Adding "Ontario, Canada" to your address\n• Using a more specific address (e.g., "123 Main Street, Toronto, ON")\n• Checking the spelling of your address\n• Using coordinates in the format "latitude, longitude"'
                 }), 400
             
             lat, lon, display_address = geocode_result
@@ -238,6 +368,10 @@ def geocode():
         # Check if point is in Ontario regions
         region_info = point_in_region(lat, lon)
         
+        # Calculate funding eligibility
+        region_name = region_info['region'] if region_info else None
+        funding_info = calculate_funding_eligibility(applicant_type, municipality_population, region_name)
+        
         if region_info is None:
             return jsonify({
                 'success': True,
@@ -246,7 +380,8 @@ def geocode():
                 'region': None,
                 'input_type': input_type,
                 'display_address': display_address,
-                'message': 'This location is outside of Ontario or in an unmapped area.'
+                'message': 'This location is outside of Ontario or in an unmapped area.',
+                'funding_info': funding_info
             })
         
         return jsonify({
@@ -256,7 +391,8 @@ def geocode():
             'region': region_info,
             'input_type': input_type,
             'display_address': display_address,
-            'message': f'This location is in {region_info["name"]}.'
+            'message': f'This location is in {region_info["name"]}.',
+            'funding_info': funding_info
         })
         
     except Exception as e:
@@ -292,9 +428,9 @@ if __name__ == '__main__':
     # Ensure GeoJSON data loads on startup
     try:
         load_geojson_data()
-        print("✓ Ontario regions GeoJSON data loaded successfully")
+        print("Ontario regions GeoJSON data loaded successfully")
     except Exception as e:
-        print(f"✗ Error loading GeoJSON data: {e}")
+        print(f"Error loading GeoJSON data: {e}")
         exit(1)
     
     port = int(os.environ.get('PORT', 5000))
