@@ -55,17 +55,6 @@ python app.py
 
 The backend will start on `http://localhost:5000`
 
-### 4. Open the Frontend
-
-Open `index.html` in your web browser, or serve it with a simple HTTP server:
-
-```bash
-# Using Python's built-in server
-python -m http.server 8000
-
-# Then open http://localhost:8000 in your browser
-```
-
 
 ## Usage Examples
 
@@ -121,6 +110,6 @@ This project is open source and available under the MIT License.
 ## Acknowledgments
 
 - **OpenStreetMap** - Map tiles and geocoding data
-- **Leaflet.js** - Excellent mapping library
-- **Tailwind CSS** - Beautiful utility-first CSS framework
-- **Nominatim** - Free geocoding service
+- **Leaflet.js** - Mapping library
+- **Tailwind CSS** - Utility-first CSS framework
+- **Nominatim** - Geocoding service
