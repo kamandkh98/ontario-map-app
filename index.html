@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ontario Region Map</title>
+    <meta name="description" content="Interactive map showing Northern and Southern Ontario regions with location search">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script> <!--this might be tricky-->
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin=""/>
+    
+    <!-- Custom styles -->
+    <style>
+        .map-container {
+            height: 600px;
+        }
+        
+        @media (max-width: 768px) {
+            .map-container {
+                height: 400px;
+            }
+        }
+        
+        .legend-item {
+            transition: all 0.2s ease-in-out;
+        }
+        
+        .legend-item:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .search-input:focus {
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .loading-spinner {
+            border: 2px solid #f3f4f6;
+            border-top: 2px solid #3b82f6;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="text-center">
+                <h1 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">EV ChargeON Regional Map</h1>
+                <p class="text-lg text-gray-600 font-medium"> <em>Interactive mapping tool to identify if your Site is in Northern or Southern Ontario</em></p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Prominent Info Card -->
+        <div class="bg-white rounded-lg border border-gray-200 shadow-sm mb-8">
+            <div class="p-8">
+                <h2 class="text-2xl font-semibold text-gray-900 mb-4">Location Search and Regional Information</h2>
+                <div class="prose prose-gray max-w-none">
+                    <p class="text-lg text-gray-700 leading-relaxed mb-6">
+                        This mapping tool assists in identifying the correct proportion of reimbursable eligible expenditures as per the table above by confirming whether your Site is located in the Northern or Southern Ontario regions. ​
+                    </p>
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                        <div class="flex items-start space-x-3">
+                            <div class="flex-shrink-0">
+                                <svg class="w-6 h-6 text-blue-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-blue-800 font-medium mb-2">EV ChargeON Program Support</p>
+                                <p class="text-blue-700 text-sm leading-relaxed">
+                                    <strong>Note:</strong> This map has been created to support applicants of the EV ChargeON program in order to understand if their charger deployment location would be in the Northern or Southern region.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Section -->
+        <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Find Location & Check Funding Eligibility</h2>
+            
+            <!-- Location Search -->
+            <div class="mb-6">
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <div class="flex-1">
+                        <label for="location-input" class="sr-only">Enter address or coordinates</label>
+                        <input 
+                            type="text" 
+                            id="location-input"
+                            class="search-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                            placeholder="Enter address (e.g., Toronto, ON) or coordinates (e.g., 43.6532, -79.3832)"
+                            aria-describedby="location-help"
+                        >
+                        <p id="location-help" class="text-sm text-gray-500 mt-1">
+                            Search by address or enter coordinates as "latitude, longitude"
+                        </p>
+                    </div>
+                    <button 
+                        id="search-btn"
+                        class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 flex items-center justify-center min-w-[120px]"
+                        aria-label="Search for location"
+                    >
+                        <span id="search-text">Search</span>
+                        <div id="search-loading" class="loading-spinner hidden ml-2"></div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Applicant Type Selection -->
+            <div class="mb-6">
+                <h3 class="text-md font-medium text-gray-900 mb-3">Applicant Type</h3>
+                <div class="space-y-3">
+                    <label class="flex items-center space-x-3 cursor-pointer">
+                        <input type="radio" name="applicant-type" value="indigenous" class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+                        <span class="text-sm text-gray-700">Indigenous community or business</span>
+                    </label>
+                    <label class="flex items-center space-x-3 cursor-pointer">
+                        <input type="radio" name="applicant-type" value="municipality" class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+                        <span class="text-sm text-gray-700">Municipality</span>
+                    </label>
+                    <label class="flex items-center space-x-3 cursor-pointer">
+                        <input type="radio" name="applicant-type" value="business" class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+                        <span class="text-sm text-gray-700">Business, not for profit corporation, or broader public sector</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Site Location Options (Hidden by default) -->
+            <div id="municipality-options" class="mb-6 hidden">
+                <h3 class="text-md font-medium text-gray-900 mb-3">Site Location</h3>
+                <div class="space-y-3">
+                    <label class="flex items-center space-x-3 cursor-pointer">
+                        <input type="radio" name="municipality-population" value="below-170k" class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+                        <span class="text-sm text-gray-700">Located in a municipality with a population less than 170,000, or an Indigenous
+                            Community</span>
+                    </label>
+                    <label class="flex items-center space-x-3 cursor-pointer">
+                        <input type="radio" name="municipality-population" value="above-170k" class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+                        <span class="text-sm text-gray-700">Located in a municipality with a population over 170,000​</span>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Search Results -->
+            <div id="search-result" class="mt-4 p-4 rounded-lg hidden" role="alert" aria-live="polite">
+            </div>
+        </div>
+
+        <!-- Map and Legend Container -->
+        <div class="flex flex-col lg:flex-row gap-6">
+            <!-- Map Section -->
+            <div class="flex-1">
+                <div class="bg-white rounded-lg shadow-sm border overflow-hidden">
+                    <div class="p-4 border-b">
+                        <h2 class="text-lg font-semibold text-gray-900">Interactive Map</h2>
+                        <p class="text-gray-600 text-sm">Click and explore the regions of Ontario</p>
+                    </div>
+                    <div id="map" class="map-container" role="application" aria-label="Interactive map of Ontario regions">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Legend Section -->
+            <div class="lg:w-80">
+                <div class="bg-white rounded-lg shadow-sm border p-6 sticky top-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Legend</h2>
+                    
+                    <!-- Region Legend Items -->
+                    <div class="space-y-4" id="legend-items">
+                         <div class="legend-item bg-gray-50 rounded-lg p-4 border">
+                             <div class="flex items-start space-x-3">
+                                 <div class="w-6 h-6 rounded border-2 border-gray-300 bg-blue-500 opacity-70 flex-shrink-0 mt-0.5"></div>
+                                 <div>
+                                     <h3 class="font-medium text-gray-900">Southern Ontario</h3>
+                                 </div>
+                             </div>
+                         </div>
+                         
+                         <div class="legend-item bg-gray-50 rounded-lg p-4 border">
+                             <div class="flex items-start space-x-3">
+                                 <div class="w-6 h-6 rounded border-2 border-gray-300 bg-green-600 opacity-70 flex-shrink-0 mt-0.5"></div>
+                                 <div>
+                                     <h3 class="font-medium text-gray-900">Northern Ontario</h3>
+                                 </div>
+                             </div>
+                         </div>
+                    </div>
+
+                    <!-- EV ChargeON Funding Program -->
+                    <div class="mt-6 pt-4 border-t border-gray-200">
+                        <h3 class="font-medium text-gray-900 mb-2">EV ChargeON Funding Program</h3>
+                        <p class="text-sm text-gray-600 mb-3">
+                            Learn about funding opportunities for electric vehicle charging stations in Ontario.
+                        </p>
+                        <a href="https://www.ontario.ca/page/ev-chargeon-program" target="_blank" rel="noopener noreferrer" class="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 font-medium">
+                            Visit EV ChargeON Program
+                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <p class="text-center text-gray-500 text-sm">
+                Ontario Region Map • Built with Leaflet and OpenStreetMap data
+            </p>
+        </div>
+    </footer>
+
+    <!-- Leaflet JavaScript -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+    
+    <!-- Application JavaScript -->
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+# Environment variables for Ontario Map App
+# Copy this file to .env and modify as needed
+FLASK_ENV=development
+FLASK_DEBUG=True
